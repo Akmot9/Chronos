@@ -15,7 +15,7 @@ struct Payload {
 // Définition globale pour l'état du chronomètre.
 static IS_RUNNING: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(true)));
 static ELAPSED_TIME: Lazy<Arc<Mutex<Duration>>> = Lazy::new(|| Arc::new(Mutex::new(Duration::new(0, 0))));
-
+static START_TIME: Lazy<Arc<Mutex<Instant>>> = Lazy::new(|| Arc::new(Mutex::new(Instant::now())));
 
 fn main() {
     let (tx, rx) = mpsc::channel();
@@ -28,25 +28,25 @@ fn main() {
             let is_running_clone = IS_RUNNING.clone();
 
             thread::spawn(move || {
-                let mut last_instant = Instant::now();
                 loop {
-                    let current_instant = Instant::now();
-                    let is_running = *is_running_clone.lock().unwrap();
-                    
+                    let elapsed_time;
                     {
-                        let mut elapsed = ELAPSED_TIME.lock().unwrap();
-                        if is_running {
-                            // Update the elapsed time if the chronometer is running.
-                            *elapsed += current_instant.duration_since(last_instant);
+                        let is_running = is_running_clone.lock().unwrap();
+                        let start_time = START_TIME.lock().unwrap();
+                        
+                        if *is_running {
+                            // If the chronometer is running, calculate the time since the last start_time.
+                            elapsed_time = *ELAPSED_TIME.lock().unwrap() + start_time.elapsed();
+                        } else {
+                            // If the chronometer is not running, use the recorded elapsed time.
+                            elapsed_time = *ELAPSED_TIME.lock().unwrap();
                         }
-                        last_instant = current_instant;
                     }
-            
-                    // Emit the time regardless of the chronometer state.
-                    let elapsed_time = *ELAPSED_TIME.lock().unwrap();
+                    
+                    // Format and send the elapsed time.
                     let time = format_duration(elapsed_time);
                     tx_clone.send(time).expect("Failed to send time");
-            
+                    
                     thread::sleep(Duration::from_millis(1));
                 }
             });
@@ -80,11 +80,17 @@ fn format_duration(duration: Duration) -> String {
 fn toggle_chronometer() {
     let mut is_running = IS_RUNNING.lock().unwrap();
     let mut elapsed = ELAPSED_TIME.lock().unwrap();
-    let now = Instant::now();
+    let mut start_time = START_TIME.lock().unwrap();
 
-    if !*is_running {
-        // If we're about to resume, we record the current Instant.
-        *elapsed += now.elapsed();
+    if *is_running {
+        // If the chronometer is currently running, we're about to pause it.
+        // Record the current elapsed time.
+        *elapsed += start_time.elapsed();
+        // Reset the start time to now to prepare for the next resume.
+        *start_time = Instant::now();
+    } else {
+        // Reset the start time to now to begin counting from this moment upon resume.
+        *start_time = Instant::now();
     }
 
     *is_running = !*is_running;
