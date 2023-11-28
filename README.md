@@ -1,6 +1,3 @@
-Creating a README file for your Tauri project is important as it provides users and contributors with information about your application, how to set it up, and how to use it. Below is a template for a README file for your Tauri stopwatch application:
-
-```markdown
 # Tauri Stopwatch Application
 
 This is a desktop stopwatch application built with [Tauri](https://tauri.studio/), a framework for building tiny, blazing fast binaries for all major desktop platforms.
