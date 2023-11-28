@@ -303,6 +303,8 @@ dependencies = [
 name = "chronos"
 version = "0.0.0"
 dependencies = [
+ "once_cell",
+ "pausable_clock",
  "serde",
  "serde_json",
  "tauri",
@@ -1803,6 +1805,15 @@ name = "pathdiff"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8835116a5c179084a830efb3adc117ab007512b535bc1a21c991d3b32a6b44dd"
+
+[[package]]
+name = "pausable_clock"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53bf074c4edd0314749976a1b244996fde867a568a3a40cd7e22355ac00da745"
+dependencies = [
+ "loom",
+]
 
 [[package]]
 name = "percent-encoding"

@@ -2,24 +2,41 @@
   <div class="chronometer">
     <!-- Display the time -->
     <div class="time-display">{{ time }}</div>
+    <button @click="toggleChronometer">Stop</button>
   </div>
 </template>
 
-<script setup>
-import { onMounted, ref } from 'vue';
+<script>
 import { event } from '@tauri-apps/api';
+import { invoke } from '@tauri-apps/api/tauri';
 
-// Reactive property to hold the time
-const time = ref('00:00:00.000');
+export default {
+  data() {
+    return {
+      time: '00:00:00.000', // Définition initiale de la propriété réactive time
 
-onMounted(() => {
-  // Add the event listener when the Vue component is mounted
-  event.listen('event-name', (response) => {
-    console.log('Event received:', response.payload);
-    // Update the reactive property with the time received from the event
-    time.value = response.payload.message;
-  });
-});
+    };
+  },
+  methods: {
+    async toggleChronometer() {
+      try {
+        await invoke('toggle_chronometer');
+      } catch (error) {
+        console.error('Failed to toggle the chronometer:', error);
+      }
+    },
+  },
+  mounted() {
+    // Ajout de l'écouteur d'événement quand le composant est monté
+    event.listen('chronometer-update', (response) => {
+    // Check if the incoming time is not the reset time
+    if (response.payload.message !== '00:00:00.000') {
+          // Update the time with the received payload
+          this.time = response.payload.message;
+        }
+    });
+  },
+};
 </script>
 
 <style scoped>
@@ -42,4 +59,24 @@ onMounted(() => {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
   background: #1e2128;
 }
+
+button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: white;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  outline: none;
+}
+button:hover {
+  background-color: #42a0f5;
+}
+button:active {
+  background-color: #1e90ff;
+}
 </style>
+
+
