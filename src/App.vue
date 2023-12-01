@@ -2,7 +2,7 @@
   <div class="chronometer">
     <!-- Display the time -->
     <div class="time-display">{{ time }}</div>
-    <button @click="toggleChronometer">Stop</button>
+    <button @click="toggleChronometer">toggle</button>
   </div>
 </template>
 

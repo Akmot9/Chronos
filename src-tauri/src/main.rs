@@ -1,20 +1,24 @@
-
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{time::{Instant, Duration}, thread, sync::mpsc};
-use std::sync::{Arc, Mutex};
 use once_cell::sync::Lazy;
+use std::sync::{Arc, Mutex};
+use std::{
+    sync::mpsc,
+    thread,
+    time::{Duration, Instant},
+};
 use tauri::Manager;
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
 struct Payload {
-  message: String,
+    message: String,
 }
 
 // Définition globale pour l'état du chronomètre.
-static IS_RUNNING: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(true)));
-static ELAPSED_TIME: Lazy<Arc<Mutex<Duration>>> = Lazy::new(|| Arc::new(Mutex::new(Duration::new(0, 0))));
+static IS_RUNNING: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(false)));
+static ELAPSED_TIME: Lazy<Arc<Mutex<Duration>>> =
+    Lazy::new(|| Arc::new(Mutex::new(Duration::new(0, 0))));
 static START_TIME: Lazy<Arc<Mutex<Instant>>> = Lazy::new(|| Arc::new(Mutex::new(Instant::now())));
 
 fn main() {
@@ -33,7 +37,7 @@ fn main() {
                     {
                         let is_running = is_running_clone.lock().unwrap();
                         let start_time = START_TIME.lock().unwrap();
-                        
+
                         if *is_running {
                             // If the chronometer is running, calculate the time since the last start_time.
                             elapsed_time = *ELAPSED_TIME.lock().unwrap() + start_time.elapsed();
@@ -42,21 +46,24 @@ fn main() {
                             elapsed_time = *ELAPSED_TIME.lock().unwrap();
                         }
                     }
-                    
+
                     // Format and send the elapsed time.
                     let time = format_duration(elapsed_time);
+                    println!("time: {:?}", &time);
                     tx_clone.send(time).expect("Failed to send time");
                     
+
                     thread::sleep(Duration::from_millis(1));
                 }
             });
-            
 
             // Here you can use app.handle to get a handle that is 'static and can be sent across threads
             let app_handle = app.handle();
             thread::spawn(move || {
                 for time in rx {
-                    app_handle.emit_all("chronometer-update", Payload { message: time }).expect("Failed to emit event");
+                    app_handle
+                        .emit_all("chronometer-update", Payload { message: time })
+                        .expect("Failed to emit event");
                 }
             });
 
@@ -73,7 +80,10 @@ fn format_duration(duration: Duration) -> String {
     let minutes = (total_seconds % 3600) / 60;
     let seconds = total_seconds % 60;
     let milliseconds = duration.subsec_millis();
-    format!("{:02}:{:02}:{:02}.{:03}", hours, minutes, seconds, milliseconds)
+    format!(
+        "{:02}:{:02}:{:02}.{:03}",
+        hours, minutes, seconds, milliseconds
+    )
 }
 
 #[tauri::command]
