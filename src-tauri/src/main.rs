@@ -16,18 +16,18 @@ struct Payload {
 }
 
 // Définition globale pour l'état du chronomètre.
-static IS_RUNNING: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(false)));
+static IS_RUNNING: Lazy<Arc<Mutex<bool>>> = 
+    Lazy::new(|| Arc::new(Mutex::new(false)));
 static ELAPSED_TIME: Lazy<Arc<Mutex<Duration>>> =
     Lazy::new(|| Arc::new(Mutex::new(Duration::new(0, 0))));
-static START_TIME: Lazy<Arc<Mutex<Instant>>> = Lazy::new(|| Arc::new(Mutex::new(Instant::now())));
+static START_TIME: Lazy<Arc<Mutex<Instant>>> = 
+    Lazy::new(|| Arc::new(Mutex::new(Instant::now())));
 
 fn main() {
     let (tx, rx) = mpsc::channel();
-    //let is_running = Arc::new(Mutex::new(true)); // État du chronomètre, vrai signifie qu'il est en cours d'exécution
 
     tauri::Builder::default()
         .setup(move |app| {
-            //let start = Instant::now();
             let tx_clone = tx.clone();
             let is_running_clone = IS_RUNNING.clone();
 
@@ -41,17 +41,21 @@ fn main() {
                         if *is_running {
                             // If the chronometer is running, calculate the time since the last start_time.
                             elapsed_time = *ELAPSED_TIME.lock().unwrap() + start_time.elapsed();
+                            // it updates the time
                         } else {
                             // If the chronometer is not running, use the recorded elapsed time.
                             elapsed_time = *ELAPSED_TIME.lock().unwrap();
+                            // it doesn't updates the time
                         }
                     }
 
                     // Format and send the elapsed time.
                     let time = format_duration(elapsed_time);
                     println!("time: {:?}", &time);
+                    // println!("is_running: {:?}", &IS_RUNNING);
+                    // println!("ELAPSED_TIME: {:?}", &ELAPSED_TIME);
+                    // println!("START_TIME: {:?}", &START_TIME);
                     tx_clone.send(time).expect("Failed to send time");
-                    
 
                     thread::sleep(Duration::from_millis(1));
                 }
@@ -69,7 +73,10 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![toggle_chronometer,reset_chronometer])
+        .invoke_handler(tauri::generate_handler![
+            toggle_chronometer,
+            reset_chronometer
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -96,24 +103,21 @@ fn toggle_chronometer() {
         // If the chronometer is currently running, we're about to pause it.
         // Record the current elapsed time.
         *elapsed += start_time.elapsed();
-        // Reset the start time to now to prepare for the next resume.
-        *start_time = Instant::now();
-    } else {
-        // Reset the start time to now to begin counting from this moment upon resume.
-        *start_time = Instant::now();
+       
     }
+    // Reset the start time to now to begin counting from this moment upon resume.
+    *start_time = Instant::now();
 
     *is_running = !*is_running;
 }
 
 #[tauri::command]
 fn reset_chronometer() {
-    let mut is_running = IS_RUNNING.lock().unwrap();
+    //let mut is_running = IS_RUNNING.lock().unwrap();
     let mut elapsed = ELAPSED_TIME.lock().unwrap();
     let mut start_time = START_TIME.lock().unwrap();
 
     *elapsed = Duration::new(0, 0);
     *start_time = Instant::now();
-    *is_running = false;
+    //*is_running = false;
 }
-
