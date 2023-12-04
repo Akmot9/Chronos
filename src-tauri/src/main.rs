@@ -69,7 +69,7 @@ fn main() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![toggle_chronometer])
+        .invoke_handler(tauri::generate_handler![toggle_chronometer,reset_chronometer])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -105,3 +105,15 @@ fn toggle_chronometer() {
 
     *is_running = !*is_running;
 }
+
+#[tauri::command]
+fn reset_chronometer() {
+    let mut is_running = IS_RUNNING.lock().unwrap();
+    let mut elapsed = ELAPSED_TIME.lock().unwrap();
+    let mut start_time = START_TIME.lock().unwrap();
+
+    *elapsed = Duration::new(0, 0);
+    *start_time = Instant::now();
+    *is_running = false;
+}
+

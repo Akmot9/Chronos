@@ -3,6 +3,7 @@
     <!-- Display the time -->
     <div class="time-display">{{ time }}</div>
     <button @click="toggleChronometer">toggle</button>
+    <button @click="resetChronometer">Reset</button>
   </div>
 </template>
 
@@ -25,17 +26,23 @@ export default {
         console.error('Failed to toggle the chronometer:', error);
       }
     },
+    async resetChronometer() {
+    try {
+      await invoke('reset_chronometer');
+      this.time = '00:00:00.000'; // Reset the time on the frontend
+    } catch (error) {
+      console.error('Failed to reset the chronometer:', error);
+    }
+  },
   },
   mounted() {
-    // Ajout de l'écouteur d'événement quand le composant est monté
+  // Ajout de l'écouteur d'événement quand le composant est monté
     event.listen('chronometer-update', (response) => {
-    // Check if the incoming time is not the reset time
-    if (response.payload.message !== '00:00:00.000') {
-          // Update the time with the received payload
-          this.time = response.payload.message;
-        }
+      // Update the time with the received payload, regardless of its value
+      this.time = response.payload.message;
     });
   },
+
 };
 </script>
 
