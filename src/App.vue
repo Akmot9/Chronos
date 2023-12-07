@@ -1,19 +1,19 @@
 <template>
-  <div class="chronometer">
-    <div class="time-display">{{ time }}</div>
-    
-    <div class="buttons">
-      <button class="button reset" @click="resetChronometer">Reset</button>
-      <button class="button start" @click="toggleChronometer">Toggle</button>
-      <button class="button start" @click="saveLap">Lap</button>
+    <div class="chronometer">
+      <div>
+        <div class="time-display">{{ time }}</div>
+        <div class="buttons">
+          <button class="button reset" @click="resetChronometer">Reset</button>
+          <button class="button start" @click="toggleChronometer">Toggle</button>
+          <button class="button start" @click="saveLap">Lap</button>
+        </div>
+      </div>
     </div>
-
     <div v-if="laps.length" class="lap-times">
       <div v-for="(lap, index) in laps" :key="index" class="lap">
         Tour {{ index + 1 }}: {{ lap }}
       </div>
     </div>
-  </div>
 </template>
 
 <script>
@@ -65,12 +65,13 @@ export default {
 </script>
 
 <style>
+
   .chronometer {
     display: flex;
     justify-content: center;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh;
+    min-height: 10vh;
     background-color: #282c34;
     color: #61dafb;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -98,7 +99,7 @@ export default {
     padding: 10px 20px;
     font-size: 1rem;
     color: white;
-    background-color: #61dafb;
+    background-color: #0e5e74;
     border: none;
     border-radius: 5px;
     cursor: pointer;
@@ -107,20 +108,23 @@ export default {
   button:hover {
     background-color: #42a0f5;
   }
+
   button:active {
     background-color: #1e90ff;
   }
 
   .lap-times {
- width: 100%;
- display: flex;
- flex-direction: column;
- align-items: center;
- justify-content: flex-start;
-}
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #282c34;
+  }
 
   .lap {
     margin-bottom: 10px;
+    color: aliceblue;
   }
  
 </style>
