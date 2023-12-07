@@ -1,5 +1,6 @@
 # Tauri Stopwatch Application
 ![logo](src-tauri/icons/Square310x310Logo.png)
+
 This is a desktop stopwatch application built with [Tauri](https://tauri.studio/), a framework for building tiny, blazing fast binaries for all major desktop platforms.
 
 ## Features
