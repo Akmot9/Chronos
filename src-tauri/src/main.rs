@@ -22,6 +22,8 @@ static ELAPSED_TIME: Lazy<Arc<Mutex<Duration>>> =
     Lazy::new(|| Arc::new(Mutex::new(Duration::new(0, 0))));
 static START_TIME: Lazy<Arc<Mutex<Instant>>> = 
     Lazy::new(|| Arc::new(Mutex::new(Instant::now())));
+static LAP_TIMES: Lazy<Arc<Mutex<Vec<Duration>>>> = 
+    Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
 
 fn main() {
     let (tx, rx) = mpsc::channel();
@@ -51,13 +53,13 @@ fn main() {
 
                     // Format and send the elapsed time.
                     let time = format_duration(elapsed_time);
-                    println!("time: {:?}", &time);
+                    //println!("time: {:?}", &time);
                     // println!("is_running: {:?}", &IS_RUNNING);
                     // println!("ELAPSED_TIME: {:?}", &ELAPSED_TIME);
                     // println!("START_TIME: {:?}", &START_TIME);
                     tx_clone.send(time).expect("Failed to send time");
 
-                    thread::sleep(Duration::from_millis(1));
+                    thread::sleep(Duration::from_millis(10));
                 }
             });
 
@@ -75,7 +77,8 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             toggle_chronometer,
-            reset_chronometer
+            reset_chronometer,
+            save_lap
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -116,8 +119,36 @@ fn reset_chronometer() {
     //let mut is_running = IS_RUNNING.lock().unwrap();
     let mut elapsed = ELAPSED_TIME.lock().unwrap();
     let mut start_time = START_TIME.lock().unwrap();
+    let mut lap_times = LAP_TIMES.lock().unwrap();
 
     *elapsed = Duration::new(0, 0);
     *start_time = Instant::now();
+    lap_times.clear();
     //*is_running = false;
+}
+
+#[tauri::command]
+fn save_lap() -> String {
+    let mut lap_times = LAP_TIMES.lock().unwrap();
+    let elapsed = ELAPSED_TIME.lock().unwrap();
+    let start_time = START_TIME.lock().unwrap();
+
+    let current_time = if *IS_RUNNING.lock().unwrap() {
+        *elapsed + start_time.elapsed()
+    } else {
+        *elapsed
+    };
+
+    // Compute lap duration
+    let lap_duration = if let Some(last_lap) = lap_times.last().cloned() {
+        current_time - last_lap
+    } else {
+        current_time
+    };
+
+    // Push the current time (not the lap duration) to lap_times for next calculation
+    lap_times.push(current_time);
+
+    // Return formatted lap duration
+    format_duration(lap_duration)
 }
