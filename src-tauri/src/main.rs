@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use once_cell::sync::Lazy;
-use std::sync::{Arc, Mutex};
+
+use std::sync::Mutex;
 use std::{
     sync::mpsc,
     thread,
@@ -15,38 +15,46 @@ struct Payload {
     message: String,
 }
 
-// Définition globale pour l'état du chronomètre.
-static IS_RUNNING: Lazy<Arc<Mutex<bool>>> = 
-    Lazy::new(|| Arc::new(Mutex::new(false)));
-static ELAPSED_TIME: Lazy<Arc<Mutex<Duration>>> =
-    Lazy::new(|| Arc::new(Mutex::new(Duration::new(0, 0))));
-static START_TIME: Lazy<Arc<Mutex<Instant>>> = 
-    Lazy::new(|| Arc::new(Mutex::new(Instant::now())));
-static LAP_TIMES: Lazy<Arc<Mutex<Vec<Duration>>>> = 
-    Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
-
+struct ChronometerState {
+    is_running: Mutex<bool>,
+    elapsed_time: Mutex<Duration>,
+    start_time: Mutex<Instant>,
+    lap_times: Mutex<Vec<Duration>>,
+}
+    
 fn main() {
     let (tx, rx) = mpsc::channel();
 
     tauri::Builder::default()
         .setup(move |app| {
+
+            let chronometer_state = ChronometerState {
+                is_running: Mutex::new(false),
+                elapsed_time: Mutex::new(Duration::new(0, 0)),
+                start_time: Mutex::new(Instant::now()),
+                lap_times: Mutex::new(Vec::new()),
+            };
+
+            app.manage(chronometer_state);
+
             let tx_clone = tx.clone();
-            let is_running_clone = IS_RUNNING.clone();
+            let app_handle = app.handle();
 
             thread::spawn(move || {
                 loop {
                     let elapsed_time;
                     {
-                        let is_running = is_running_clone.lock().unwrap();
-                        let start_time = START_TIME.lock().unwrap();
+                        let state = app_handle.state::<ChronometerState>();
+                        let is_running = state.is_running.lock().unwrap();
+                        let start_time = state.start_time.lock().unwrap();
 
                         if *is_running {
                             // If the chronometer is running, calculate the time since the last start_time.
-                            elapsed_time = *ELAPSED_TIME.lock().unwrap() + start_time.elapsed();
+                            elapsed_time = *state.elapsed_time.lock().unwrap() + start_time.elapsed();
                             // it updates the time
                         } else {
                             // If the chronometer is not running, use the recorded elapsed time.
-                            elapsed_time = *ELAPSED_TIME.lock().unwrap();
+                            elapsed_time = *state.elapsed_time.lock().unwrap()
                             // it doesn't updates the time
                         }
                     }
@@ -97,10 +105,10 @@ fn format_duration(duration: Duration) -> String {
 }
 
 #[tauri::command]
-fn toggle_chronometer() {
-    let mut is_running = IS_RUNNING.lock().unwrap();
-    let mut elapsed = ELAPSED_TIME.lock().unwrap();
-    let mut start_time = START_TIME.lock().unwrap();
+fn toggle_chronometer(state: tauri::State<ChronometerState>) {
+    let mut is_running = state.is_running.lock().unwrap();
+    let mut elapsed = state.elapsed_time.lock().unwrap();
+    let mut start_time = state.start_time.lock().unwrap();
 
     if *is_running {
         // If the chronometer is currently running, we're about to pause it.
@@ -115,11 +123,11 @@ fn toggle_chronometer() {
 }
 
 #[tauri::command]
-fn reset_chronometer() {
+fn reset_chronometer(state: tauri::State<ChronometerState>) {
     //let mut is_running = IS_RUNNING.lock().unwrap();
-    let mut elapsed = ELAPSED_TIME.lock().unwrap();
-    let mut start_time = START_TIME.lock().unwrap();
-    let mut lap_times = LAP_TIMES.lock().unwrap();
+    let mut elapsed = state.elapsed_time.lock().unwrap();
+    let mut start_time = state.start_time.lock().unwrap();
+    let mut lap_times = state.lap_times.lock().unwrap();
 
     *elapsed = Duration::new(0, 0);
     *start_time = Instant::now();
@@ -128,12 +136,12 @@ fn reset_chronometer() {
 }
 
 #[tauri::command]
-fn save_lap() -> String {
-    let mut lap_times = LAP_TIMES.lock().unwrap();
-    let elapsed = ELAPSED_TIME.lock().unwrap();
-    let start_time = START_TIME.lock().unwrap();
+fn save_lap(state: tauri::State<ChronometerState>) -> String {
+    let mut lap_times = state.lap_times.lock().unwrap();
+    let elapsed = state.elapsed_time.lock().unwrap();
+    let start_time = state.start_time.lock().unwrap();
 
-    let current_time = if *IS_RUNNING.lock().unwrap() {
+    let current_time = if *state.is_running.lock().unwrap() {
         *elapsed + start_time.elapsed()
     } else {
         *elapsed
