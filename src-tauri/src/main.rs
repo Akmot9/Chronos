@@ -4,10 +4,12 @@
 use std::sync::Mutex;
 use std::{
     sync::mpsc,
-    thread,
-    time::{Duration, Instant},
+    thread
 };
 use tauri::Manager;
+
+use tokio::spawn;
+use tokio::time::{sleep, Duration, Instant};
 
 // the payload type must implement `Serialize` and `Clone`.
 #[derive(Clone, serde::Serialize)]
@@ -22,7 +24,8 @@ struct ChronometerState {
     lap_times: Mutex<Vec<Duration>>,
 }
     
-fn main() {
+#[tokio::main]    
+async fn main() {
     let (tx, rx) = mpsc::channel();
 
     tauri::Builder::default()
@@ -40,7 +43,7 @@ fn main() {
             let tx_clone = tx.clone();
             let app_handle = app.handle();
 
-            thread::spawn(move || {
+            spawn(async move {
                 loop {
                     let elapsed_time;
                     {
@@ -67,7 +70,7 @@ fn main() {
                     // println!("START_TIME: {:?}", &START_TIME);
                     tx_clone.send(time).expect("Failed to send time");
 
-                    thread::sleep(Duration::from_millis(10));
+                    sleep(Duration::from_millis(10)).await;
                 }
             });
 
