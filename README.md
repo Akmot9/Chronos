@@ -84,4 +84,4 @@ If you want to contact me you can reach me at `avicocyprien@yahoo.com`.
 
 ## License
 
-This project uses the following license: [MIT](<link_to_license>).
+This project uses the following license: [MIT](LICENCE.txt).
