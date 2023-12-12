@@ -13,5 +13,12 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
+  },
+  test: {
+    // Test-specific configurations for Vitest
+    globals: true,
+    environment: 'jsdom',
+    // Include your test files here
+    include: ['**/test/**/*.test.js', '**/test/**/*.spec.js'],
   }
 }));
