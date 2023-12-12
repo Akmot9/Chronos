@@ -1,11 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-
 use std::sync::Mutex;
-use std::{
-    sync::mpsc,
-    thread
-};
+use std::
+    sync::mpsc;
 use tauri::Manager;
 
 use tokio::spawn;
@@ -76,7 +73,7 @@ async fn main() {
 
             // Here you can use app.handle to get a handle that is 'static and can be sent across threads
             let app_handle = app.handle();
-            thread::spawn(move || {
+            spawn(async move {
                 for time in rx {
                     app_handle
                         .emit_all("chronometer-update", Payload { message: time })
