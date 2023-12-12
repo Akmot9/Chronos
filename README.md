@@ -76,11 +76,11 @@ Alternatively, see the GitHub documentation on [creating a pull request](https:/
 
 Thanks to the following people who have contributed to this project:
 
-- [@yourusername](https://github.com/Akmot9)
+- [@Akmot9](https://github.com/Akmot9)
 
 ## Contact
 
-If you want to contact me you can reach me at `<your_email>`.
+If you want to contact me you can reach me at `avicocyprien@yahoo.com`.
 
 ## License
 
