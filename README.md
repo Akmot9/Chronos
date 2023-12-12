@@ -6,7 +6,12 @@ This is a desktop stopwatch application built with [Tauri](https://tauri.studio/
 ## Features
 
 - Start/Stop functionality
+![start](<docs/Capture d’écran du 2023-12-12 09-40-08.png>)
+
 - Reset timer
+- Lap fonctionality 
+![start](<docs/Capture d’écran du 2023-12-12 09-41-31.png>)
+
 - Cross-platform: runs on Windows, macOS, and Linux
 
 ## Prerequisites
